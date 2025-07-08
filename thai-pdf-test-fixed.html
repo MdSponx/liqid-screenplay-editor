@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai PDF Export Test - FIXED</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1E4D3A;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .screenplay-content {
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .scene-heading {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 20px 0 10px 0;
+        }
+        .action {
+            margin: 10px 0;
+        }
+        .character {
+            margin: 10px 0 0 150px;
+            text-transform: uppercase;
+        }
+        .dialogue {
+            margin: 0 0 10px 100px;
+            max-width: 300px;
+        }
+        button {
+            background: #E86F2C;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #d55a1f;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #2196f3;
+        }
+        .success {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+        }
+        .thai-text {
+            font-family: 'Sarabun', 'Noto Sans Thai', Arial, sans-serif;
+            font-size: 16px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Thai Screenplay PDF Export - FIXED VERSION</h1>
+        
+        <div class="info success">
+            <strong>✅ SOLUTION IMPLEMENTED:</strong> This version uses enhanced Thai font support with canvas-based rendering 
+            to ensure Thai characters display correctly in PDF exports instead of showing garbled text.
+        </div>
+
+        <div class="screenplay-content thai-text">
+            <div class="scene-heading">1. EXT. สวนสาธารณะ - กลางวัน</div>
+            <div class="action">นักเรียนหญิงคนหนึ่งนั่งอ่านหนังสือใต้ต้นไผ่ใหญ่ แสงแดดส่องผ่านใบไผ่สร้างเงาสวยงาม</div>
+            
+            <div class="character">สมใจ</div>
+            <div class="dialogue">วันนี้อากาศดีจัง อยากอยู่ที่นี่ตลอดไป</div>
+            
+            <div class="action">เธอหยุดอ่านและมองไปรอบๆ สวน เห็นเด็กๆ เล่นกันอย่างสนุกสนาน</div>
+            
+            <div class="scene-heading">2. EXT. ลานจอดรถ - บ่าย</div>
+            <div class="action">รถยนต์คันหนึ่งจอดอยู่ในลานจอดรถที่เงียบสงบ</div>
+            
+            <div class="character">คนขับรถ</div>
+            <div class="dialogue">เราถึงแล้ว ขอบคุณที่ให้โอกาส</div>
+            
+            <div class="scene-heading">3. INT. ห้องนั่งเล่น - ค่ำ</div>
+            <div class="action">ครอบครัวหนึ่งนั่งรับประทานอาหารเย็นด้วยกัน บรรยากาศอบอุ่น</div>
+            
+            <div class="character">แม่</div>
+            <div class="dialogue">วันนี้ลูกเรียนเป็นอย่างไรบ้าง?</div>
+            
+            <div class="character">ลูกสาว</div>
+            <div class="dialogue">สนุกมากค่ะ แม่ วันนี้เรียนเรื่องธรรมชาติ</div>
+        </div>
+
+        <button onclick="generateFixedThaiPDF()">🔧 Generate FIXED Thai PDF</button>
+        <button onclick="generateOriginalPDF()">❌ Generate Original (Broken) PDF</button>
+        <button onclick="generateEnglishPDF()">🇺🇸 Generate English PDF (Comparison)</button>
+        
+        <div class="info">
+            <strong>🎯 Expected Result:</strong> The FIXED version should display Thai characters properly as readable Thai script, 
+            not as garbled characters like "sfjsalfjklsdaf". The fix uses canvas-based rendering to convert Thai text to images 
+            before embedding in the PDF.
+        </div>
+
+        <div class="info">
+            <strong>🔧 Technical Solution:</strong>
+            <ul>
+                <li><strong>Canvas Rendering:</strong> Thai text is rendered on HTML5 canvas with proper Thai fonts</li>
+                <li><strong>Image Embedding:</strong> Canvas content is converted to PNG and embedded in PDF</li>
+                <li><strong>Font Fallback:</strong> Uses Sarabun → Noto Sans Thai → Arial font stack</li>
+                <li><strong>Unicode Normalization:</strong> Proper Unicode NFC normalization for Thai characters</li>
+                <li><strong>Character Detection:</strong> Automatic detection of Thai characters (U+0E00-U+0E7F)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Thai PDF support functions
+        function containsThaiText(text) {
+            const thaiRegex = /[\u0E00-\u0E7F]/;
+            return thaiRegex.test(text);
+        }
+
+        function normalizeThaiText(text) {
+            try {
+                let normalized = text.normalize('NFC');
+                
+                if (containsThaiText(normalized)) {
+                    // Remove zero-width characters
+                    normalized = normalized.replace(/[\u200B-\u200D\uFEFF]/g, '');
+                    
+                    // Fix common Thai character combinations
+                    normalized = normalized.replace(/\u0E33/g, '\u0E4D\u0E32'); // ำ -> ํา
+                    normalized = normalized.replace(/\u0E4D\u0E32/g, '\u0E33'); // ํา -> ำ
+                }
+                
+                return normalized;
+            } catch (error) {
+                console.warn('Text normalization failed:', error);
+                return text;
+            }
+        }
+
+        function processTextForPDF(text) {
+            let processedText = normalizeThaiText(text);
+            
+            if (containsThaiText(processedText)) {
+                // Ensure proper spacing around Thai text mixed with English
+                processedText = processedText.replace(/([a-zA-Z0-9])([ก-๙])/g, '$1 $2');
+                processedText = processedText.replace(/([ก-๙])([a-zA-Z0-9])/g, '$1 $2');
+                
+                // Normalize spaces
+                processedText = processedText.replace(/\s+/g, ' ');
+            }
+            
+            return processedText;
+        }
+
+        function setFontForText(pdf, text, style = 'normal') {
+            try {
+                if (containsThaiText(text)) {
+                    // Use Helvetica for better Unicode support
+                    pdf.setFont('helvetica', style);
+                } else {
+                    // Use Courier for English text (standard screenplay font)
+                    pdf.setFont('courier', style);
+                }
+            } catch (error) {
+                console.warn('Failed to set font:', error);
+                pdf.setFont('helvetica', style);
+            }
+        }
+
+        // Enhanced function to render Thai text as image
+        async function renderThaiTextAsImage(pdf, text, x, y, options = {}) {
+            if (!containsThaiText(text)) {
+                // If no Thai text, use regular text rendering
+                pdf.text(text, x, y);
+                return;
+            }
+
+            try {
+                // Create a canvas to render Thai text
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                if (!ctx) {
+                    throw new Error('Could not get canvas context');
+                }
+
+                // Set canvas size and font
+                const fontSize = options.fontSize || 12;
+                const scaleFactor = 2; // Higher resolution for better quality
+                canvas.width = (text.length * fontSize * 0.8) * scaleFactor;
+                canvas.height = (fontSize * 2) * scaleFactor;
+                
+                // Scale context for high DPI
+                ctx.scale(scaleFactor, scaleFactor);
+                
+                ctx.font = `${options.fontWeight || 'normal'} ${fontSize}px 'Sarabun', 'Noto Sans Thai', Arial, sans-serif`;
+                ctx.fillStyle = options.color || '#000000';
+                ctx.textBaseline = 'top';
+                ctx.textAlign = 'left';
+                
+                // Enable text rendering optimizations
+                ctx.textRenderingOptimization = 'optimizeQuality';
+                
+                // Clear canvas and draw text
+                ctx.clearRect(0, 0, canvas.width / scaleFactor, canvas.height / scaleFactor);
+                ctx.fillText(text, 0, fontSize * 0.2);
+                
+                // Convert canvas to image and add to PDF
+                const imageData = canvas.toDataURL('image/png', 1.0);
+                const imgWidth = (canvas.width * 72) / (96 * scaleFactor); // Convert pixels to points
+                const imgHeight = (canvas.height * 72) / (96 * scaleFactor);
+                
+                pdf.addImage(imageData, 'PNG', x, y - fontSize * 0.8, imgWidth, imgHeight);
+                
+                console.log(`✅ Successfully rendered Thai text as image: "${text}"`);
+                
+            } catch (error) {
+                console.warn('Failed to render Thai text as image, falling back to regular text:', error);
+                // Fallback to regular text rendering
+                setFontForText(pdf, text);
+                pdf.text(text, x, y);
+            }
+        }
+
+        // FIXED Thai PDF generation
+        async function generateFixedThaiPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            // Set up the document
+            pdf.setProperties({
+                title: 'บทภาพยนตร์ทดสอบภาษาไทย - FIXED',
+                author: 'LiQid Screenplay Writer - Thai Support Enhanced',
+                subject: 'Thai Language Test - Fixed Version',
+                keywords: 'screenplay, script, movie, thai, ภาษาไทย, fixed'
+            });
+
+            let y = 30;
+            const lineHeight = 15;
+            const margin = 20;
+
+            // Title with enhanced Thai rendering
+            const title = 'บทภาพยนตร์ทดสอบภาษาไทย (เวอร์ชันแก้ไข)';
+            pdf.setFontSize(16);
+            await renderThaiTextAsImage(pdf, title, margin, y, {
+                fontSize: 16,
+                fontWeight: 'bold'
+            });
+            y += 30;
+
+            // Content with enhanced rendering
+            const content = [
+                { type: 'scene', text: '1. EXT. สวนสาธารณะ - กลางวัน' },
+                { type: 'action', text: 'นักเรียนหญิงคนหนึ่งนั่งอ่านหนังสือใต้ต้นไผ่ใหญ่ แสงแดดส่องผ่านใบไผ่สร้างเงาสวยงาม' },
+                { type: 'character', text: 'สมใจ' },
+                { type: 'dialogue', text: 'วันนี้อากาศดีจัง อยากอยู่ที่นี่ตลอดไป' },
+                { type: 'action', text: 'เธอหยุดอ่านและมองไปรอบๆ สวน เห็นเด็กๆ เล่นกันอย่างสนุกสนาน' },
+                { type: 'scene', text: '2. EXT. ลานจอดรถ - บ่าย' },
+                { type: 'action', text: 'รถยนต์คันหนึ่งจอดอยู่ในลานจอดรถที่เงียบสงบ' },
+                { type: 'character', text: 'คนขับรถ' },
+                { type: 'dialogue', text: 'เราถึงแล้ว ขอบคุณที่ให้โอกาส' }
+            ];
+
+            pdf.setFontSize(12);
+
+            for (const item of content) {
+                const processedText = processTextForPDF(item.text);
+                
+                if (item.type === 'scene') {
+                    await renderThaiTextAsImage(pdf, processedText.toUpperCase(), margin, y, {
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                    });
+                } else if (item.type === 'character') {
+                    await renderThaiTextAsImage(pdf, processedText.toUpperCase(), margin + 40, y, {
+                        fontSize: 12,
+                        fontWeight: 'normal'
+                    });
+                } else if (item.type === 'dialogue') {
+                    // Handle multi-line dialogue
+                    const maxWidth = 120;
+                    const words = processedText.split(' ');
+                    let currentLine = '';
+                    let lineCount = 0;
+                    
+                    for (const word of words) {
+                        const testLine = currentLine ? `${currentLine} ${word}` : word;
+                        if (testLine.length * 6 <= maxWidth) { // Rough width estimation
+                            currentLine = testLine;
+                        } else {
+                            if (currentLine) {
+                                await renderThaiTextAsImage(pdf, currentLine, margin + 20, y + (lineCount * lineHeight), {
+                                    fontSize: 12,
+                                    fontWeight: 'normal'
+                                });
+                                lineCount++;
+                            }
+                            currentLine = word;
+                        }
+                    }
+                    
+                    if (currentLine) {
+                        await renderThaiTextAsImage(pdf, currentLine, margin + 20, y + (lineCount * lineHeight), {
+                            fontSize: 12,
+                            fontWeight: 'normal'
+                        });
+                        lineCount++;
+                    }
+                    
+                    y += (lineCount - 1) * lineHeight;
+                } else {
+                    // Handle multi-line action
+                    const maxWidth = 170;
+                    const words = processedText.split(' ');
+                    let currentLine = '';
+                    let lineCount = 0;
+                    
+                    for (const word of words) {
+                        const testLine = currentLine ? `${currentLine} ${word}` : word;
+                        if (testLine.length * 6 <= maxWidth) { // Rough width estimation
+                            currentLine = testLine;
+                        } else {
+                            if (currentLine) {
+                                await renderThaiTextAsImage(pdf, currentLine, margin, y + (lineCount * lineHeight), {
+                                    fontSize: 12,
+                                    fontWeight: 'normal'
+                                });
+                                lineCount++;
+                            }
+                            currentLine = word;
+                        }
+                    }
+                    
+                    if (currentLine) {
+                        await renderThaiTextAsImage(pdf, currentLine, margin, y + (lineCount * lineHeight), {
+                            fontSize: 12,
+                            fontWeight: 'normal'
+                        });
+                        lineCount++;
+                    }
+                    
+                    y += (lineCount - 1) * lineHeight;
+                }
+                
+                y += lineHeight + 5;
+            }
+
+            pdf.save('thai_screenplay_FIXED.pdf');
+            console.log('✅ Fixed Thai PDF generated successfully!');
+        }
+
+        // Original (broken) version for comparison
+        function generateOriginalPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(12);
+            
+            let y = 30;
+            const content = [
+                '1. EXT. สวนสาธารณะ - กลางวัน',
+                '',
+                'นักเรียนหญิงคนหนึ่งนั่งอ่านหนังสือใต้ต้นไผ่ใหญ่ แสงแดดส่องผ่านใบไผ่สร้างเงาสวยงาม',
+                '',
+                'สมใจ',
+                'วันนี้อากาศดีจัง อยากอยู่ที่นี่ตลอดไป',
+                '',
+                'เธอหยุดอ่านและมองไปรอบๆ สวน เห็นเด็กๆ เล่นกันอย่างสนุกสนาน'
+            ];
+
+            content.forEach(line => {
+                if (line === '') {
+                    y += 10;
+                } else {
+                    // This will show garbled text for Thai characters
+                    const lines = pdf.splitTextToSize(line, 170);
+                    lines.forEach((textLine, index) => {
+                        pdf.text(textLine, 20, y + (index * 15));
+                    });
+                    y += lines.length * 15 + 5;
+                }
+            });
+
+            pdf.save('thai_screenplay_BROKEN.pdf');
+            console.log('❌ Original (broken) Thai PDF generated - will show garbled text');
+        }
+
+        function generateEnglishPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            pdf.setFont('courier', 'normal');
+            pdf.setFontSize(12);
+            
+            let y = 30;
+            const content = [
+                '1. EXT. PUBLIC PARK - DAY',
+                '',
+                'A young female student sits reading a book under a large bamboo tree. Sunlight filters through the bamboo leaves creating beautiful shadows.',
+                '',
+                'SOMJAI',
+                'What a beautiful day. I wish I could stay here forever.',
+                '',
+                'She stops reading and looks around the park, seeing children playing happily.',
+                '',
+                '2. EXT. PARKING LOT - AFTERNOON',
+                '',
+                'A car is parked in a quiet parking lot.',
+                '',
+                'DRIVER',
+                'We have arrived. Thank you for the opportunity.'
+            ];
+
+            content.forEach(line => {
+                if (line === '') {
+                    y += 10;
+                } else {
+                    const lines = pdf.splitTextToSize(line, 170);
+                    lines.forEach((textLine, index) => {
+                        pdf.text(textLine, 20, y + (index * 15));
+                    });
+                    y += lines.length * 15 + 5;
+                }
+            });
+
+            pdf.save('english_screenplay_comparison.pdf');
+            console.log('🇺🇸 English comparison PDF generated successfully');
+        }
+    </script>
+</body>
+</html>

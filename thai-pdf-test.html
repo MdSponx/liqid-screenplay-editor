@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai PDF Export Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1E4D3A;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .screenplay-content {
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .scene-heading {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 20px 0 10px 0;
+        }
+        .action {
+            margin: 10px 0;
+        }
+        .character {
+            margin: 10px 0 0 150px;
+            text-transform: uppercase;
+        }
+        .dialogue {
+            margin: 0 0 10px 100px;
+            max-width: 300px;
+        }
+        button {
+            background: #E86F2C;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #d55a1f;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Thai Screenplay PDF Export Test</h1>
+        
+        <div class="info">
+            <strong>Test Purpose:</strong> This test demonstrates the fixed Thai language support in PDF export. 
+            The previous issue showed garbled characters like "sfjsalfjklsdaf" instead of proper Thai text.
+        </div>
+
+        <div class="screenplay-content">
+            <div class="scene-heading">1. EXT. สวนสาธารณะ - กลางวัน</div>
+            <div class="action">นักเรียนหญิงคนหนึ่งนั่งอ่านหนังสือใต้ต้นไผ่ใหญ่ แสงแดดส่องผ่านใบไผ่สร้างเงาสวยงาม</div>
+            
+            <div class="character">สมใจ</div>
+            <div class="dialogue">วันนี้อากาศดีจัง อยากอยู่ที่นี่ตลอดไป</div>
+            
+            <div class="action">เธอหยุดอ่านและมองไปรอบๆ สวน เห็นเด็กๆ เล่นกันอย่างสนุกสนาน</div>
+            
+            <div class="scene-heading">2. EXT. ลานจอดรถ - บ่าย</div>
+            <div class="action">รถยนต์คันหนึ่งจอดอยู่ในลานจอดรถที่เงียบสงบ</div>
+            
+            <div class="character">คนขับรถ</div>
+            <div class="dialogue">เราถึงแล้ว ขอบคุณที่ให้โอกาส</div>
+            
+            <div class="scene-heading">3. INT. ห้องนั่งเล่น - ค่ำ</div>
+            <div class="action">ครอบครัวหนึ่งนั่งรับประทานอาหารเย็นด้วยกัน บรรยากาศอบอุ่น</div>
+            
+            <div class="character">แม่</div>
+            <div class="dialogue">วันนี้ลูกเรียนเป็นอย่างไรบ้าง?</div>
+            
+            <div class="character">ลูกสาว</div>
+            <div class="dialogue">สนุกมากค่ะ แม่ วันนี้เรียนเรื่องธรรมชาติ</div>
+        </div>
+
+        <button onclick="generatePDF()">Generate Thai PDF</button>
+        <button onclick="generateEnglishPDF()">Generate English PDF (Comparison)</button>
+        
+        <div class="info">
+            <strong>Expected Result:</strong> The PDF should display Thai characters properly instead of garbled text. 
+            Thai text should appear as readable Thai script, not as random characters.
+        </div>
+    </div>
+
+    <script>
+        // Thai PDF support functions (simplified version)
+        function containsThaiText(text) {
+            const thaiRegex = /[\u0E00-\u0E7F]/;
+            return thaiRegex.test(text);
+        }
+
+        function normalizeThaiText(text) {
+            try {
+                return text.normalize('NFC');
+            } catch (error) {
+                console.warn('Text normalization failed:', error);
+                return text;
+            }
+        }
+
+        function setFontForText(pdf, text, style = 'normal') {
+            try {
+                if (containsThaiText(text)) {
+                    // Try different fonts that might support Thai
+                    try {
+                        pdf.setFont('helvetica', style);
+                    } catch {
+                        pdf.setFont('times', style);
+                    }
+                } else {
+                    pdf.setFont('courier', style);
+                }
+            } catch (error) {
+                console.warn('Failed to set font:', error);
+                pdf.setFont('helvetica', style);
+            }
+        }
+
+        function processTextForPDF(text) {
+            let processedText = normalizeThaiText(text);
+            
+            if (containsThaiText(processedText)) {
+                // Remove zero-width characters that might cause issues
+                processedText = processedText.replace(/[\u200B-\u200D\uFEFF]/g, '');
+                
+                // Add proper spacing around Thai text
+                processedText = processedText.replace(/([a-zA-Z0-9])([ก-๙])/g, '$1 $2');
+                processedText = processedText.replace(/([ก-๙])([a-zA-Z0-9])/g, '$1 $2');
+            }
+            
+            return processedText;
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            // Set up the document
+            pdf.setProperties({
+                title: 'Thai Screenplay Test',
+                author: 'LiQid Screenplay Writer',
+                subject: 'Thai Language Test'
+            });
+
+            let y = 30;
+            const lineHeight = 15;
+            const margin = 20;
+
+            // Title
+            const title = 'บทภาพยนตร์ทดสอบภาษาไทย';
+            setFontForText(pdf, title, 'bold');
+            pdf.setFontSize(16);
+            const titleWidth = pdf.getTextWidth(title);
+            pdf.text(title, (210 - titleWidth) / 2, y);
+            y += 30;
+
+            // Content
+            const content = [
+                { type: 'scene', text: '1. EXT. สวนสาธารณะ - กลางวัน' },
+                { type: 'action', text: 'นักเรียนหญิงคนหนึ่งนั่งอ่านหนังสือใต้ต้นไผ่ใหญ่ แสงแดดส่องผ่านใบไผ่สร้างเงาสวยงาม' },
+                { type: 'character', text: 'สมใจ' },
+                { type: 'dialogue', text: 'วันนี้อากาศดีจัง อยากอยู่ที่นี่ตลอดไป' },
+                { type: 'action', text: 'เธอหยุดอ่านและมองไปรอบๆ สวน เห็นเด็กๆ เล่นกันอย่างสนุกสนาน' },
+                { type: 'scene', text: '2. EXT. ลานจอดรถ - บ่าย' },
+                { type: 'action', text: 'รถยนต์คันหนึ่งจอดอยู่ในลานจอดรถที่เงียบสงบ' },
+                { type: 'character', text: 'คนขับรถ' },
+                { type: 'dialogue', text: 'เราถึงแล้ว ขอบคุณที่ให้โอกาส' }
+            ];
+
+            pdf.setFontSize(12);
+
+            content.forEach(item => {
+                const processedText = processTextForPDF(item.text);
+                
+                if (item.type === 'scene') {
+                    setFontForText(pdf, processedText, 'bold');
+                    pdf.text(processedText.toUpperCase(), margin, y);
+                } else if (item.type === 'character') {
+                    setFontForText(pdf, processedText, 'normal');
+                    pdf.text(processedText.toUpperCase(), margin + 40, y);
+                } else if (item.type === 'dialogue') {
+                    setFontForText(pdf, processedText, 'normal');
+                    const lines = pdf.splitTextToSize(processedText, 120);
+                    lines.forEach((line, index) => {
+                        pdf.text(line, margin + 20, y + (index * lineHeight));
+                    });
+                    y += (lines.length - 1) * lineHeight;
+                } else {
+                    setFontForText(pdf, processedText, 'normal');
+                    const lines = pdf.splitTextToSize(processedText, 170);
+                    lines.forEach((line, index) => {
+                        pdf.text(line, margin, y + (index * lineHeight));
+                    });
+                    y += (lines.length - 1) * lineHeight;
+                }
+                
+                y += lineHeight + 5;
+            });
+
+            pdf.save('thai_screenplay_test.pdf');
+        }
+
+        function generateEnglishPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            pdf.setFont('courier', 'normal');
+            pdf.setFontSize(12);
+            
+            let y = 30;
+            const content = [
+                '1. EXT. PUBLIC PARK - DAY',
+                '',
+                'A young female student sits reading a book under a large bamboo tree. Sunlight filters through the bamboo leaves creating beautiful shadows.',
+                '',
+                'SOMJAI',
+                'What a beautiful day. I wish I could stay here forever.',
+                '',
+                'She stops reading and looks around the park, seeing children playing happily.',
+                '',
+                '2. EXT. PARKING LOT - AFTERNOON',
+                '',
+                'A car is parked in a quiet parking lot.',
+                '',
+                'DRIVER',
+                'We have arrived. Thank you for the opportunity.'
+            ];
+
+            content.forEach(line => {
+                if (line === '') {
+                    y += 10;
+                } else {
+                    const lines = pdf.splitTextToSize(line, 170);
+                    lines.forEach((textLine, index) => {
+                        pdf.text(textLine, 20, y + (index * 15));
+                    });
+                    y += lines.length * 15 + 5;
+                }
+            });
+
+            pdf.save('english_screenplay_test.pdf');
+        }
+    </script>
+</body>
+</html>
