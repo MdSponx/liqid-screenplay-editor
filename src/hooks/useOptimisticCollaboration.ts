@@ -201,6 +201,8 @@ export const useOptimisticCollaboration = ({
     type?: string
   ) => {
     if (!enabled) return;
+    
+    console.log(`Optimistic text change: blockId=${blockId}, content length=${content.length}, type=${type}`);
 
     // 1. Apply optimistic change immediately (0ms delay)
     applyOptimisticChange(blockId, content, type);

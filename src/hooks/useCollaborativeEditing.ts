@@ -86,6 +86,8 @@ export const useCollaborativeEditing = ({
   // Function to handle local block changes
   const handleBlockChange = useCallback((blockId: string, content: string, type?: string) => {
     if (!enabled || isApplyingRemoteChanges.current) return;
+    
+    console.log(`Collaborative editing: handleBlockChange called for blockId=${blockId}`);
 
     // Update local state immediately
     const updatedBlocks = blocks.map(block => 
@@ -95,9 +97,11 @@ export const useCollaborativeEditing = ({
     );
     
     onBlocksUpdate(updatedBlocks);
+    console.log(`Local state updated for blockId=${blockId}`);
     
     // Sync to Firestore with debouncing
     debouncedSync(blockId, content, type || blocks.find(b => b.id === blockId)?.type || 'action');
+    console.log(`Debounced sync queued for blockId=${blockId}`);
   }, [blocks, onBlocksUpdate, debouncedSync, enabled]);
 
   // Set up real-time listener for collaborative edits

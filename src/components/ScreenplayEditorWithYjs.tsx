@@ -98,6 +98,7 @@ const ScreenplayEditorWithYjs: React.FC<ScreenplayEditorWithYjsProps> = ({
   const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
     setHasChanges(true);
+    console.log('Content changed, marking as unsaved');
   }, []);
 
   // Auto-save functionality
@@ -118,6 +119,7 @@ const ScreenplayEditorWithYjs: React.FC<ScreenplayEditorWithYjsProps> = ({
     }
 
     setIsSaving(true);
+    console.log('Starting save operation...');
     try {
       // Here you would integrate with your existing save logic
       // For now, we'll just simulate a save
@@ -127,11 +129,13 @@ const ScreenplayEditorWithYjs: React.FC<ScreenplayEditorWithYjsProps> = ({
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setHasChanges(false);
+      console.log('Save successful, changes cleared');
       console.log('Screenplay saved successfully');
       
       return { success: true };
     } catch (error) {
       console.error('Error saving screenplay:', error);
+      console.error('Save failed:', error instanceof Error ? error.message : 'Failed to save screenplay');
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to save screenplay'

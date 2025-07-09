@@ -396,6 +396,7 @@ const BlockComponentImproved: React.FC<ExtendedBlockComponentProps> = ({
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     // If processing a selection, block all Enter events
     if (isProcessingSelection && e.key === 'Enter') {
+      console.log('Enter key blocked during selection processing');
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -403,10 +404,16 @@ const BlockComponentImproved: React.FC<ExtendedBlockComponentProps> = ({
     
     // If suggestions are showing and this is a navigation/selection key, prevent parent handling
     if (showSuggestions && ['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) {
+      console.log(`Key ${e.key} delegated to suggestions component`);
       // Stop the event from bubbling to parent components
       e.stopPropagation();
       // Don't call onKeyDown for these keys when suggestions are active
       return;
+    }
+    
+    // Log Enter key presses for debugging
+    if (e.key === 'Enter') {
+      console.log(`Enter key pressed in block ${block.id}`);
     }
     
     // For all other keys, pass to parent component
@@ -430,6 +437,7 @@ const BlockComponentImproved: React.FC<ExtendedBlockComponentProps> = ({
     }
     
     const content = contentElement.textContent || '';
+    console.log(`Input event: blockId=${block.id}, content length=${content.length}`);
     setCurrentInput(content);
     
     // Don't open suggestions if just closed or if scene selection is active
