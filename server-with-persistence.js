@@ -12,6 +12,7 @@ import path from 'path'
 const PORT = process.env.PORT || 1234
 const FIREBASE_BACKUP_INTERVAL = 30000 // 30 seconds
 const LEVELDB_PATH = './yjs-leveldb'
+const IS_STACKBLITZ = process.env.STACKBLITZ === 'true'
 
 // Firebase Admin SDK Configuration
 // Replace with your Firebase service account key path
@@ -28,7 +29,7 @@ try {
     
     firebaseApp = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      databaseURL: 'https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com/' // Replace with your database URL
+      databaseURL: 'https://liqid-dd431-default-rtdb.firebaseio.com/'
     })
     
     firebaseDatabase = admin.database()
@@ -42,9 +43,19 @@ try {
   console.warn('   Running without Firebase persistence.')
 }
 
-// Initialize LevelDB persistence
-const persistence = new LeveldbPersistence(LEVELDB_PATH)
-console.log(`📁 LevelDB persistence initialized at: ${LEVELDB_PATH}`)
+// Initialize LevelDB persistence (skip in StackBlitz)
+let persistence = null
+if (!IS_STACKBLITZ) {
+  try {
+    persistence = new LeveldbPersistence(LEVELDB_PATH)
+    console.log(`📁 LevelDB persistence initialized at: ${LEVELDB_PATH}`)
+  } catch (error) {
+    console.warn('⚠️  Failed to initialize LevelDB persistence:', error.message)
+    console.warn('   Running without LevelDB persistence.')
+  }
+} else {
+  console.log('📁 LevelDB persistence disabled in StackBlitz environment')
+}
 
 // Store Y.js documents and their metadata
 const docs = new Map()
@@ -168,12 +179,28 @@ const getOrCreateDocument = async (docName, gc = true) => {
 
   try {
     // Try to restore from LevelDB first
-    const persistedDoc = await persistence.getYDoc(docName)
-    if (persistedDoc && Y.encodeStateAsUpdate(persistedDoc).length > 0) {
-      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(persistedDoc))
-      console.log(`📁 Document "${docName}" restored from LevelDB`)
+    if (persistence) {
+      const persistedDoc = await persistence.getYDoc(docName)
+      if (persistedDoc && Y.encodeStateAsUpdate(persistedDoc).length > 0) {
+        Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(persistedDoc))
+        console.log(`📁 Document "${docName}" restored from LevelDB`)
+      } else {
+        // If not in LevelDB, try Firebase
+        const firebaseUpdate = await firebaseBackup.restoreDocument(docName)
+        if (firebaseUpdate) {
+          Y.applyUpdate(ydoc, firebaseUpdate)
+        } else {
+          console.log(`📄 New document "${docName}" created`)
+          // Set initial metadata for new documents
+          docMetadata.set(docName, {
+            created: new Date().toISOString(),
+            lastModified: new Date().toISOString(),
+            version: 1
+          })
+        }
+      }
     } else {
-      // If not in LevelDB, try Firebase
+      // No LevelDB, try Firebase only
       const firebaseUpdate = await firebaseBackup.restoreDocument(docName)
       if (firebaseUpdate) {
         Y.applyUpdate(ydoc, firebaseUpdate)
@@ -188,8 +215,10 @@ const getOrCreateDocument = async (docName, gc = true) => {
       }
     }
 
-    // Set up persistence binding
-    persistence.bindState(docName, ydoc)
+    // Set up persistence binding (only if LevelDB is available)
+    if (persistence) {
+      persistence.bindState(docName, ydoc)
+    }
 
     // Set up periodic Firebase backup
     let backupTimer = null
@@ -434,7 +463,12 @@ server.listen(PORT, () => {
   console.log(`🚀 Y.js WebSocket server with Firebase persistence running on port ${PORT}`)
   console.log(`📡 WebSocket URL: ws://localhost:${PORT}`)
   console.log(`🌐 API endpoint: http://localhost:${PORT}/api/documents`)
-  console.log(`📁 LevelDB path: ${LEVELDB_PATH}`)
+  
+  if (persistence) {
+    console.log(`📁 LevelDB path: ${LEVELDB_PATH}`)
+  } else {
+    console.log(`📁 LevelDB persistence: disabled`)
+  }
   
   if (firebaseDatabase) {
     console.log(`🔥 Firebase Realtime Database backup enabled`)
@@ -468,8 +502,10 @@ const gracefulShutdown = async () => {
   
   // Close persistence
   try {
-    await persistence.destroy()
-    console.log('📁 LevelDB persistence closed')
+    if (persistence) {
+      await persistence.destroy()
+      console.log('📁 LevelDB persistence closed')
+    }
   } catch (error) {
     console.error('❌ Error closing LevelDB:', error.message)
   }
