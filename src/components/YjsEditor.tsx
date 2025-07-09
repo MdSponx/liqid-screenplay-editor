@@ -3,6 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import { useCallback, useEffect } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
@@ -70,6 +71,7 @@ const YjsEditor: React.FC<YjsEditorProps> = ({
       }),
       Collaboration.configure({
         document: ydoc,
+        field: 'content', // Specify the field name to sync
       }),
       CollaborationCursor.configure({
         provider: provider,
@@ -87,12 +89,59 @@ const YjsEditor: React.FC<YjsEditorProps> = ({
     },
   });
 
+  // Ensure the editor is properly initialized
+  useEffect(() => {
+    if (editor && provider && !provider.awareness.getLocalState()?.user) {
+      // Set user information for collaborative cursors
+      provider.awareness.setLocalStateField('user', {
+        name: userName,
+        color: userColor,
+        id: userId
+      });
+      
+      console.log('Y.js awareness state initialized for user:', userName);
+    }
+  }, [editor, provider, userName, userColor, userId]);
+
+  // Debug logging for Y.js events
+  useEffect(() => {
+    if (!provider || !ydoc) return;
+    
+    const handleSync = () => {
+      console.log('Y.js: Document synced with server');
+    };
+    
+    const handleUpdate = (update: Uint8Array, origin: any) => {
+      if (origin !== provider) {
+        console.log('Y.js: Document updated from remote source');
+      }
+    };
+    
+    provider.on('sync', handleSync);
+    ydoc.on('update', handleUpdate);
+    
+    return () => {
+      provider.off('sync', handleSync);
+      ydoc.off('update', handleUpdate);
+    };
+  }, [provider, ydoc]);
   // Handle content changes
   const handleContentChange = useCallback(() => {
     if (editor && onContentChange) {
       onContentChange(editor.getHTML());
+      console.log('Y.js: Content changed and callback triggered');
     }
   }, [editor, onContentChange]);
+
+  // Ensure content changes are properly tracked
+  useEffect(() => {
+    if (editor) {
+      editor.on('update', handleContentChange);
+      return () => {
+        editor.off('update', handleContentChange);
+      };
+    }
+  }, [editor, handleContentChange]);
 
   // Clean up on unmount
   useEffect(() => {
