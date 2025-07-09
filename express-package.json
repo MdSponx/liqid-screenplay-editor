@@ -1,0 +1,31 @@
+{
+  "name": "yjs-version-api-server",
+  "version": "1.0.0",
+  "description": "Express API server for Y.js document versioning with Firebase integration",
+  "main": "express-server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node express-server.js",
+    "dev": "nodemon express-server.js",
+    "test": "node test-version-api.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.0.0",
+    "yjs": "^13.6.10"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "yjs",
+    "firebase",
+    "express",
+    "versioning",
+    "collaborative",
+    "screenplay"
+  ],
+  "author": "",
+  "license": "MIT"
+}

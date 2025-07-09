@@ -1,0 +1,35 @@
+{
+  "name": "yjs-websocket-server",
+  "version": "2.0.0",
+  "description": "Y.js WebSocket server with Firebase Realtime Database persistence for collaborative screenplay editing",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "start:persistence": "node server-with-persistence.js",
+    "dev": "node server.js",
+    "dev:persistence": "node server-with-persistence.js"
+  },
+  "dependencies": {
+    "yjs": "^13.6.10",
+    "y-websocket": "^3.0.0",
+    "y-protocols": "^1.0.5",
+    "y-leveldb": "^0.1.2",
+    "firebase-admin": "^12.0.0",
+    "level": "^8.0.0",
+    "lib0": "^0.2.102",
+    "ws": "^8.16.0"
+  },
+  "keywords": [
+    "yjs",
+    "websocket",
+    "collaborative",
+    "real-time",
+    "screenplay",
+    "firebase",
+    "persistence",
+    "leveldb"
+  ],
+  "author": "",
+  "license": "MIT"
+}
